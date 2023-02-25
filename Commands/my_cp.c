@@ -4,23 +4,20 @@
 #include <fcntl.h>  // creat 
 #include <sys/stat.h> // stat
 #include <utime.h> // utime
-
-#include <string.h>
+#include <string.h> // strncpy()
 
 
 char* getCopiedFileName(char* copiedFilePath)
 {	
 	char temp[100] ;
 	strncpy(temp, copiedFilePath, 100);
-	printf("%s\n", temp);
 	
-	char* by = "/";
+	char* by = "/";	
+	char* name;
 	
 	char* ptr = strtok(temp, by);
-	char* name;
 	while (ptr != NULL) {
 		name = ptr;
-		printf("'%s'\n", name);
 		ptr = strtok(NULL, by);
 	}
 	
@@ -32,7 +29,7 @@ int main(int argc, char* argv[])
 {
     if(argc != 3){
         printf("Invalid command options provided\n ");
-        //exit(-1);
+        exit(-1);
     }
 	
 	char* copiedFilePath = argv[1];
@@ -41,9 +38,6 @@ int main(int argc, char* argv[])
 	
 	char fullPathOfNewFile[4095];
 	snprintf(fullPathOfNewFile, sizeof(fullPathOfNewFile), "%s/%s", newFilePath, copiedFileName);
-	
-	printf("full path = %s\n", fullPathOfNewFile);
-	printf("copiedFilePath = %s\n", copiedFilePath);
 	
 	int fd = creat(fullPathOfNewFile, 0666);
     if(fd < 0) {
