@@ -8,12 +8,12 @@ int isDir(char* lastArgument)
 	struct stat path;
     	stat(lastArgument, &path);
 
-    	return S_ISREG(path.st_mode);
+    	return !S_ISREG(path.st_mode);
 }
 
 char* getPath(char* path, int* fileNameCount)
 {
-	if(!isDir(path)) {
+	if(isDir(path)) {
         printf("Last one is directory. Files created in %s%s", path, " directory\n");
 		*fileNameCount = *fileNameCount - 1;
 		return path;		
