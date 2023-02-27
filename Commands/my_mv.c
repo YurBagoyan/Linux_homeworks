@@ -11,10 +11,12 @@ int isDir(char* lastArgument)
 	struct stat path;
 	stat(lastArgument, &path);
 
+	printf("+++++++++++");
+
     return !S_ISREG(path.st_mode);
 }
 
-char* getMovedFileName(char* movedFilePath)
+char* getFileNameFromPath(char* movedFilePath)
 {	
 	char temp[100] ;
 	strncpy(temp, movedFilePath, 100);
@@ -31,21 +33,55 @@ char* getMovedFileName(char* movedFilePath)
 	return name;
 }
 
+char* getNewFileFullPath(char* newFilePath, char* movedFilePath)
+{
+	if(!isDir(newFilePath)) {
+		return newFilePath;		
+	}
+	
+	char* movedFileName = getFileNameFromPath(movedFilePath);
+	char* newFileFullPath;	
+	
+	snprintf(newFileFullPath, sizeof(newFileFullPath), "%s/%s", newFilePath, movedFileName);
+	return newFileFullPath;
+}
+
 int main(int argc, char* argv[])
 {
+	
+	printf("----------%s", argv[2]);
 	if(argc != 3){
 		printf("Invalid command options provided\n ");
-        //exit(-1);
-	
-	char* movedFilepath = argv[1];
-	char* newFilePath = argv[2];
-	
-	if(isDir(newFilePath) 
-	{
-		
+        exit(-1);
 	}
+	
+	char* movedFilePath = argv[1];
+	char* newFilePath = argv[2];	
+	
+	printf("moved %s", movedFilePath);
+	printf("new %s", newFilePath);
+		
+	char* newFileFullPath = getNewFileFullPath(newFilePath, movedFilePath);
+	
+	int fd = creat(newFileFullPath, 0666);
+    if(fd < 0) {
+        printf("File not created\n ");
+		exit(-1);
+    }
 
-
+	int source_fd = open(movedFilePath, O_RDONLY);
+	if(source_fd < 0) {
+        printf("File not opened\n ");
+		exit(-1);
+    }	
+	
+	char buf[1];
+	int i = 0;
+    while((i = read(source_fd, buf, 1)) > 0) {        
+        write(fd, buf, i);
+	}
+	
+	close(source_fd);
 	return 0;
 	
 }
