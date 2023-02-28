@@ -6,20 +6,20 @@
 #include <utime.h> // utime
 #include <string.h> // strncpy()
 
-int isDir(char* lastArgument)
+int isDir(char* argument)
 {
 	struct stat path;
-	stat(lastArgument, &path);
+	stat(argument, &path);
 
-	printf("+++++++++++");
-
-    return !S_ISREG(path.st_mode);
+    //return S_ISREG(path.st_mode);
+	
+	return S_ISDIR(path.st_mode);
 }
 
-char* getFileNameFromPath(char* movedFilePath)
+char* getFileNameFromPath(char* filePath)
 {	
 	char temp[100] ;
-	strncpy(temp, movedFilePath, 100);
+	strncpy(temp, filePath, 100);
 	
 	char* by = "/";	
 	char* name;
@@ -33,55 +33,53 @@ char* getFileNameFromPath(char* movedFilePath)
 	return name;
 }
 
-char* getNewFileFullPath(char* newFilePath, char* movedFilePath)
+void createAndCopy(char* newFile, const int source_fd)
 {
-	if(!isDir(newFilePath)) {
-		return newFilePath;		
+	int fd = creat(newFile, 0666);
+	if(fd < 0) {
+		printf("File not created\n ");
+		exit(-1);
 	}
-	
-	char* movedFileName = getFileNameFromPath(movedFilePath);
-	char* newFileFullPath;	
-	
-	snprintf(newFileFullPath, sizeof(newFileFullPath), "%s/%s", newFilePath, movedFileName);
-	return newFileFullPath;
+		
+	char buf[1];
+	int i = 0;
+	while((i = read(source_fd, buf, 1)) > 0) {        
+		write(fd, buf, i);
+	}
 }
+
 
 int main(int argc, char* argv[])
 {
-	
-	printf("----------%s", argv[2]);
 	if(argc != 3){
 		printf("Invalid command options provided\n ");
         exit(-1);
 	}
 	
-	char* movedFilePath = argv[1];
-	char* newFilePath = argv[2];	
+	char* movedFile = argv[1];
+	char* newFile = argv[2];
 	
-	printf("moved %s", movedFilePath);
-	printf("new %s", newFilePath);
-		
-	char* newFileFullPath = getNewFileFullPath(newFilePath, movedFilePath);
-	
-	int fd = creat(newFileFullPath, 0666);
-    if(fd < 0) {
-        printf("File not created\n ");
-		exit(-1);
-    }
+	int source_fd = open(movedFile, O_RDONLY);
+		if(source_fd < 0) {
+			printf("File not opened\n ");
+			exit(-1);
+	}	
 
-	int source_fd = open(movedFilePath, O_RDONLY);
-	if(source_fd < 0) {
-        printf("File not opened\n ");
-		exit(-1);
-    }	
-	
-	char buf[1];
-	int i = 0;
-    while((i = read(source_fd, buf, 1)) > 0) {        
-        write(fd, buf, i);
+	if(!isDir(newFile)) {		
+		createAndCopy(newFile, source_fd);
+	} else {
+		char* movedFileName = getFileNameFromPath(movedFile);
+		strcat(newFile, "/");
+		strcat(newFile, movedFileName);
+		
+		createAndCopy(newFile, source_fd);
 	}
 	
 	close(source_fd);
-	return 0;
+	int r = remove(movedFile);
+	if (r < 0) {
+		printf("%s File is not removed\n", movedFile);
+	}
 	
+	return 0;
 }
